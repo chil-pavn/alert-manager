@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-crashloop-pod
+  labels:
+    app: test-crashloop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-crashloop
+  template:
+    metadata:
+      labels:
+        app: test-crashloop
+    spec:
+      containers:
+        - name: crashloop
+          image: busybox
+          args:
+            - /bin/sh
+            - -c
+            - "sleep 5 && exit 1"

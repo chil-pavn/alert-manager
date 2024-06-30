@@ -14,12 +14,12 @@ spec:
     spec:
       containers:
       - name: alert-manager
-        image: y/alert-manager:latest
+        image: chiluka123/alert-manager:stable-v0.2
         ports:
-        - containerPort: 5000
+        - containerPort: 5001
         env:
         - name: SLACK_WEBHOOK_URL
-          value: "YOUR_SLACK_WEBHOOK_URL"
+          value: "SLACK_WEBHOOK_URL"
         resources:
           limits:
             cpu: "1"

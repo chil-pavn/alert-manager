@@ -2,6 +2,7 @@ package actor
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/chil-pavn/alert-manager/types"
@@ -20,14 +21,29 @@ func TakeAction(alert types.Alert) string {
 		message := fmt.Sprintf("Alert received: %s\nAction taken:\nCPU decreased: %t\nMemory decreased: %t\nImage corrected: %t",
 			alert.Annotations["description"], cpuDecreased, memoryDecreased, imageCorrected)
 
-		sendToSlack(message)
+		SendToSlack(message)
 		return message
 	}
 
 	return "No action taken"
 }
 
-func sendToSlack(message string) {
+func DecreaseMemory(alert types.Alert) string{
+	podName := alert.Labels["pod"]
+	namespace := alert.Labels["namespace"]
+	err := kubernetes.DecreasePodMemory(namespace, podName)
+	if err != nil{
+		fmt.Printf("unable to decrease memory: %v", err)
+	}
+	message := fmt.Sprintf("Alert received: %s\nAction taken:\nMemory decreased: %s",
+			alert.Annotations["description"], "true")
+			SendToSlack(message)
+	return ""
+}
+func SendToSlack(message string){
 	webhookURL := os.Getenv("SLACK_WEBHOOK_URL")
-	utils.SendSlackMessage(webhookURL, message)
+	err := utils.SendSlackMessage(webhookURL, message)
+	if err!=nil{
+		log.Printf("unable to send slack message: %v", err)
+	}
 }
