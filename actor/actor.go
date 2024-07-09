@@ -47,3 +47,26 @@ func SendToSlack(message string){
 		log.Printf("unable to send slack message: %v", err)
 	}
 }
+
+func IncreaseMemory(alert types.Alert) error{
+	// find deployment or statefulset from the pod name
+	podName := alert.Labels["pod"]
+	namespace := alert.Labels["namespace"]
+	containerName := alert.Labels["container"]
+	kind, name, err := kubernetes.GetPodKindAndName(namespace, podName)
+
+	if err != nil{
+		return err
+	}
+	switch kind {
+	case "Deployment":
+		kubernetes.EditDeployment(name, namespace, containerName)
+	case "StatefulSet":
+		kubernetes.EditStatefulset(name, namespace, containerName)
+	// increase the memory
+	default:
+		return fmt.Errorf("owner resource Kind not supported: [%s]", kind)
+	}
+	// rollout deplotment or statefulset 
+	return nil
+}

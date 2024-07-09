@@ -35,5 +35,13 @@ func ManageAlert(a types.Alert) string {
 		}
 		// add more ways to manage this particular alert
     }
+	if a.Name() == "KubeContainerOOMKilled"{
+
+		// add function to decrease the memory from deployment or statefulset attached woth it
+		err := actor.IncreaseMemory(a)
+		if err!= nil{
+			log.Fatalf("unable to increase memory: [%s]", err)
+		}
+	}
 	return "Alert management done"
 }

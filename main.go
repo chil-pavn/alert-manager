@@ -19,7 +19,7 @@ import (
 
 func main() {
     // Start the health check goroutine
-    go startHealthCheck("default", "alertmanager")
+    go startHealthCheck("default", "alertmanager") // replace alertmanager with the service that send these alerts 
 
     http.HandleFunc("/webhook", receiver.HandleWebhook)
     port := ":5001"

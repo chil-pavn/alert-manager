@@ -103,6 +103,40 @@ func GetPodDetails(namespace, podName string) (string, error) {
 	return fmt.Sprintf("Pod details:\nName: %s\nNamespace: %s\nNode: %s\nStatus: %s\n", pod.Name, pod.Namespace, pod.Spec.NodeName, pod.Status.Phase), nil
 }
 
+func GetPodKindAndName(namespace, podName string) (string, string, error) {
+	clientset, err := getKubernetesClient()
+	if err != nil {
+		return "", "",err
+	}
+
+	pod, err := clientset.CoreV1().Pods(namespace).Get(context.TODO(), podName, metav1.GetOptions{})
+	if err != nil {
+		return "", "", err
+	}
+
+	// Get the owner reference of the pod
+	ownerRef := metav1.GetControllerOf(pod)
+	if ownerRef == nil {
+		log.Fatal("Pod has no owner reference")
+	}
+
+	if ownerRef.Kind == "ReplicaSet"{
+		replicaSet, err := clientset.AppsV1().ReplicaSets(namespace).Get(context.TODO(), ownerRef.Name, metav1.GetOptions{})
+		if err != nil {
+			panic(err.Error())
+		}
+
+		// Check owner references of the ReplicaSet
+		for _, rsOwnerRef := range replicaSet.OwnerReferences {
+			if rsOwnerRef.Kind == "Deployment" {
+				fmt.Printf("Deployment: %s\n", rsOwnerRef.Name)
+				return rsOwnerRef.Kind, rsOwnerRef.Name, nil
+			}
+		}
+	}
+	return ownerRef.Kind, ownerRef.Name, nil
+}
+
 func DecreasePodCPU(namespace, podName string) error {
 	clientset, err := getKubernetesClient()
 	if err != nil {
@@ -197,4 +231,68 @@ func CheckCrashLoopBackOff(podName, namespace string) (string, string, error) {
 	}
 
 	return "", "", nil
+}
+
+func EditDeployment(KindName, namespace, containerName string){
+	// Get the deployment object
+	clientset, err := getKubernetesClient()
+	if err != nil {
+		log.Print("unable to get Kube context")
+	}
+	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.Background(), KindName, metav1.GetOptions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Update the replicas
+	containerList := deployment.Spec.Template.Spec.Containers
+
+	for _, container := range containerList {
+		if container.Name == containerName {
+			memory := container.Resources.Requests.Memory()
+			newMemory := memory.Value() * 2
+			container.Resources.Requests[v1.ResourceMemory] = *resource.NewQuantity(newMemory, memory.Format)
+		}
+	}
+
+	// Update the deployment
+	_, err = clientset.AppsV1().Deployments(namespace).Update(context.Background(), deployment, metav1.UpdateOptions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Deployment updated successfully!")
+}
+
+func EditStatefulset(KindName, namespace, containerName string){
+	// Get the deployment object
+	clientset, err := getKubernetesClient()
+	if err != nil {
+		log.Print("unable to get Kube context")
+	}
+	// Get the StatefulSet object
+	statefulset, err := clientset.AppsV1().StatefulSets(namespace).Get(context.Background(), KindName, metav1.GetOptions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Update the replicas
+	containerList := statefulset.Spec.Template.Spec.Containers
+
+	for _, container := range containerList {
+		if container.Name == containerName {
+			memory := container.Resources.Requests.Memory().Value()
+			newMemory := memory * 2
+			container.Resources.Requests.Memory().Set(newMemory)
+		}
+	}
+
+	// Update the statefulset
+	_, err = clientset.AppsV1().StatefulSets(namespace).Update(context.Background(),statefulset , metav1.UpdateOptions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Statefulset updated successfully!")
+
 }

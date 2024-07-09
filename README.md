@@ -48,13 +48,13 @@ curl -X POST -H "Content-Type: application/json" -d '{
     "summary": "Pod is crash looping."
   },
   "labels": {
-    "alertname": "KubePodCrashLooping",
+    "alertname": "KubeContainerOOMKilled",
     "cluster": "minikube",
     "container": "crashloop",
     "endpoint": "http",
     "job": "kube-state-metrics",
     "namespace": "default",
-    "pod": "test-crashloop-pod-7fb96ccb6c-h7t7m",
+    "pod": "test-crashloop-pod-796c9b6654-7zgfl",
     "priority": "P0",
     "prometheus": "monitoring/kube-prometheus-stack-prometheus",
     "region": "us-west-1",

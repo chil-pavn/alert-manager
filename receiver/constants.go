@@ -1,6 +1,6 @@
 package receiver
 
 var (
-    AlertNamesToHandle = []string{"KubePodCrashLooping", "Pending"}
+    AlertNamesToHandle = []string{"KubePodCrashLooping", "Pending", "KubeContainerOOMKilled"}
 )
   
